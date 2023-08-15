@@ -51,7 +51,10 @@ defaults_path="/etc/default/tailscaled"
 override_path="/etc/systemd/system/tailscaled.service.d/override.conf"
 if [[ ! -f "${override_path}" ]]; then
   mkdir -p "$(dirname "${override_path}")"
-  cp -rf override.conf "${override_path}"
+  tee "${override_path}" > /dev/null <<OVERRIDE
+[Service]
+ExtensionDirectories=/var/lib/extensions/tailscale
+OVERRIDE
 fi
 
 echo "Tailscale installation complete. Managing services..."
