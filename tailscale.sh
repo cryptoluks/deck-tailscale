@@ -32,7 +32,7 @@ echo -n "Downloading and extracting..."
 curl -sS "https://pkgs.tailscale.com/stable/${tarball_url}" | tar xzf -
 echo "Done."
 
-extracted_dir="$(echo "${tarball}" | cut -d. -f1-3)"
+extracted_dir="$(basename "${tarball_url}" .tar.gz)"
 test -d "${extracted_dir}"
 
 # Set up target directory structure and organize files.
