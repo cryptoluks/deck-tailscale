@@ -1,6 +1,16 @@
 #!/usr/bin/env bash
 
-set -euxo pipefail
+# Error handler function.
+error_handler() {
+  echo "An error occurred on line $1 of the script."
+  read -p "Press any key to exit." -n1
+  exit 1
+}
+
+set -euo pipefail
+
+# Trap any script error.
+trap 'error_handler $LINENO' ERR
 
 # Load system configuration variables.
 source /etc/os-release
