@@ -1,5 +1,3 @@
 [Desktop Entry]
-Exec=sh -c 'curl -L https://raw.githubusercontent.com/cryptoluks/deck-tailscale/main/tailscale.sh | bash'
-Name=Install Tailscale
-Terminal=true
+Exec=konsole -e "sh -c 'curl -L https://raw.githubusercontent.com/cryptoluks/deck-tailscale/main/tailscale.sh | sudo bash'"
 Type=Application
