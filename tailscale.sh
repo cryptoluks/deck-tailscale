@@ -37,9 +37,9 @@ test -d "${extracted_dir}"
 
 # Set up target directory structure and organize files.
 install_dir="tailscale/usr"
-mkdir -p "${install_dir}/{bin,sbin,lib/{systemd/system,extension-release.d}}"
-cp -rf "${extracted_dir}/tailscale" "${install_dir}/bin/tailscale"
-cp -rf "${extracted_dir}/tailscaled" "${install_dir}/sbin/tailscaled"
+mkdir -p ${install_dir}/{bin,sbin,lib/{systemd/system,extension-release.d}}
+cp -f "${extracted_dir}/tailscale" "${install_dir}/bin/tailscale"
+cp -f "${extracted_dir}/tailscaled" "${install_dir}/sbin/tailscaled"
 
 # Create a systemd extension-release file.
 echo -e "SYSEXT_LEVEL=1.0\nID=steamos\nVERSION_ID=${VERSION_ID}" > "${install_dir}/lib/extension-release.d/extension-release.tailscale"
@@ -51,11 +51,11 @@ rm -rf "${extensions_dir}/tailscale"
 cp -rf tailscale "${extensions_dir}/"
 
 # Set up systemd service.
-cp -rf "${extracted_dir}/systemd/tailscaled.service" "/etc/systemd/system"
+cp -f "${extracted_dir}/systemd/tailscaled.service" "/etc/systemd/system"
 
 # Check and copy defaults if absent.
 defaults_path="/etc/default/tailscaled"
-[[ ! -f "${defaults_path}" ]] && cp -rf "${extracted_dir}/systemd/tailscaled.defaults" "${defaults_path}"
+[[ ! -f "${defaults_path}" ]] && cp -f "${extracted_dir}/systemd/tailscaled.defaults" "${defaults_path}"
 
 # Handle overrides if absent.
 override_path="/etc/systemd/system/tailscaled.service.d/override.conf"
