@@ -89,3 +89,5 @@ else
 fi
 
 echo "Tailscale setup complete."
+
+tailscale up --qr --operator=deck --ssh
