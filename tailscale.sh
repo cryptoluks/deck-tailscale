@@ -42,7 +42,7 @@ cp -f "${extracted_dir}/tailscale" "${install_dir}/bin/tailscale"
 cp -f "${extracted_dir}/tailscaled" "${install_dir}/sbin/tailscaled"
 
 # Create a systemd extension-release file.
-echo -e "SYSEXT_LEVEL=1.0\nID=steamos\nVERSION_ID=${VERSION_ID}" > "${install_dir}/lib/extension-release.d/extension-release.tailscale"
+echo -e "ID=steamos\nVERSION_ID=${VERSION_ID}" > "${install_dir}/lib/extension-release.d/extension-release.tailscale"
 
 # Manage system extensions: create, remove old, install new.
 extensions_dir="/var/lib/extensions"
@@ -90,4 +90,4 @@ fi
 
 echo "Tailscale setup complete."
 
-tailscale up --qr --operator=deck --ssh
+tailscale up --qr --operator=deck --ssh --accept-dns=false
