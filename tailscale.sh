@@ -55,7 +55,9 @@ fi
 echo "Tailscale installation complete. Configuring services..."
 
 if systemctl is-enabled --quiet systemd-sysext && systemctl is-active --quiet systemd-sysext; then
-  echo "Activating systemd-sysext..."
+  echo "systemd-sysext is already enabled and active."
+else
+  echo "Enabling and activating systemd-sysext..."
   systemctl enable systemd-sysext --now
 fi
 
