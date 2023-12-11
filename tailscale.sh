@@ -1,76 +1,93 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
-
-error_exit() {
-  echo "Error on line $1. Exiting."
+# Error handler function.
+error_handler() {
+  echo "An error occurred on line $1 of the script."
   read -p "Press any key to exit." -n1
   exit 1
 }
-trap 'error_exit $LINENO' ERR
 
+set -euo pipefail
+
+# Trap any script error.
+trap 'error_handler $LINENO' ERR
+
+# Load system configuration variables.
 source /etc/os-release
-temp_dir=$(mktemp -d)
+
+# Create and switch to a temporary directory.
+temp_dir="$(mktemp -d)"
 trap "rm -rf ${temp_dir}" EXIT
 cd "${temp_dir}"
 
+# Fetch the latest Tailscale version.
 echo -n "Fetching Tailscale version..."
-tailscale_info=$(curl -s 'https://pkgs.tailscale.com/stable/?mode=json')
-tarball_url=$(echo "$tailscale_info" | jq -r .Tarballs.amd64)
-version=$(cut -d_ -f2 <<< "${tarball_url}")
+tailscale_info="$(curl -s 'https://pkgs.tailscale.com/stable/?mode=json')"
+tarball_url="$(echo "$tailscale_info" | jq -r .Tarballs.amd64)"
+version="$(echo "${tarball_url}" | cut -d_ -f2)"
 echo "Version ${version}"
 
-echo -n "Downloading Tailscale..."
-curl "https://pkgs.tailscale.com/stable/${tarball_url}" | tar xzf -
-echo "Download complete."
+# Download and extract the Tailscale package.
+echo -n "Downloading and extracting..."
+curl -sS "https://pkgs.tailscale.com/stable/${tarball_url}" | tar xzf -
+echo "Done."
 
-extracted_dir=$(basename "${tarball_url}" .tgz)
+extracted_dir="$(basename "${tarball_url}" .tgz)"
 test -d "${extracted_dir}"
 
+# Set up target directory structure and organize files.
 install_dir="tailscale/usr"
 mkdir -p ${install_dir}/{bin,sbin,lib/{systemd/system,extension-release.d}}
-cp -f "${extracted_dir}/tailscale" "${install_dir}/bin"
-cp -f "${extracted_dir}/tailscaled" "${install_dir}/sbin"
-echo "ID=steamos\nVERSION_ID=${VERSION_ID}" > "${install_dir}/lib/extension-release.d/extension-release.tailscale"
+cp -f "${extracted_dir}/tailscale" "${install_dir}/bin/tailscale"
+cp -f "${extracted_dir}/tailscaled" "${install_dir}/sbin/tailscaled"
 
+# Create a systemd extension-release file.
+echo -e "ID=steamos\nVERSION_ID=${VERSION_ID}" > "${install_dir}/lib/extension-release.d/extension-release.tailscale"
+
+# Manage system extensions: create, remove old, install new.
 extensions_dir="/var/lib/extensions"
 mkdir -p "${extensions_dir}"
 rm -rf "${extensions_dir}/tailscale"
 cp -rf tailscale "${extensions_dir}/"
 
+# Set up systemd service.
 cp -f "${extracted_dir}/systemd/tailscaled.service" "/etc/systemd/system"
 
+# Check and copy defaults if absent.
 defaults_path="/etc/default/tailscaled"
 [[ ! -f "${defaults_path}" ]] && cp -f "${extracted_dir}/systemd/tailscaled.defaults" "${defaults_path}"
 
+# Handle overrides if absent.
 override_path="/etc/systemd/system/tailscaled.service.d/override.conf"
 if [[ ! -f "${override_path}" ]]; then
   mkdir -p "$(dirname "${override_path}")"
-  cat > "${override_path}" <<OVERRIDE
+  tee "${override_path}" > /dev/null <<OVERRIDE
 [Service]
 ExtensionDirectories=/var/lib/extensions/tailscale
 OVERRIDE
 fi
 
-echo "Tailscale installation complete. Configuring services..."
+echo "Tailscale installation complete. Managing services..."
 
+# Manage systemd-sysext service.
 if systemctl is-enabled --quiet systemd-sysext && systemctl is-active --quiet systemd-sysext; then
-  echo "systemd-sysext is already enabled and active."
+  echo "systemd-sysext is enabled and active."
 else
-  echo "Enabling and activating systemd-sysext..."
   systemctl enable systemd-sysext --now
 fi
 
+# Refresh and reload.
 systemd-sysext refresh > /dev/null 2>&1
 systemctl daemon-reload > /dev/null
 
+# Manage tailscaled service.
 if systemctl is-enabled --quiet tailscaled && systemctl is-active --quiet tailscaled; then
-  echo "Restarting tailscaled service..."
+  echo "tailscaled is enabled and active. Restarting..."
   systemctl restart tailscaled
 else
-  echo "Enabling and starting tailscaled service..."
   systemctl enable tailscaled --now
 fi
 
-echo "Tailscale setup complete. Starting Tailscale..."
+echo "Tailscale setup complete."
+
 tailscale up --qr --operator=deck --ssh --accept-dns=true
