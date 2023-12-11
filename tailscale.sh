@@ -21,7 +21,7 @@ version=$(cut -d_ -f2 <<< "${tarball_url}")
 echo "Version ${version}"
 
 echo -n "Downloading Tailscale..."
-curl -sS "https://pkgs.tailscale.com/stable/${tarball_url}" | tar xzf -
+curl "https://pkgs.tailscale.com/stable/${tarball_url}" | tar xzf -
 echo "Download complete."
 
 extracted_dir=$(basename "${tarball_url}" .tgz)
