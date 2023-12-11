@@ -90,4 +90,4 @@ fi
 
 echo "Tailscale setup complete."
 
-tailscale up --qr --operator=deck --ssh
+tailscale up --qr --operator=deck --ssh --accept-dns=true
